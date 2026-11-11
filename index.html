@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NailPalette - セルフネイルアシスタント</title>
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --bg-color: #fdf8f9;
+      --primary: #e8a0bf;
+      --primary-hover: #d880a6;
+      --accent: #baa0de;
+      --accent-hover: #a385cd;
+      --text-main: #4a3e43;
+      --text-sub: #8c7b83;
+      --card-bg: rgba(255, 255, 255, 0.88);
+      --shadow: 0 8px 24px rgba(186, 160, 222, 0.15);
+      --border-radius: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'M PLUS Rounded 1c', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: linear-gradient(135deg, #fef4f8 0%, #f3ebf9 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding-bottom: 50px;
+    }
+
+    /* ヘッダー */
+    header {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(186, 160, 222, 0.12);
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo i {
+      color: var(--accent);
+      font-size: 1.5rem;
+    }
+
+    /* メインコンテナ */
+    .container {
+      max-width: 960px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    /* タブナビゲーション */
+    .nav-tabs {
+      display: flex;
+      background: rgba(255, 255, 255, 0.7);
+      padding: 6px;
+      border-radius: 35px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      background: transparent;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .tab-btn.active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 4px 14px rgba(232, 160, 191, 0.3);
+    }
+
+    /* セクションコンテンツ */
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.35s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* カード・パネルデザイン */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: var(--border-radius);
+      padding: 22px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-title-text {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* =========================================
+       1. 混色シミュレーター（絵の具パレット）
+       ========================================= */
+    .simulator-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 820px) {
+      .simulator-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 絵の具パレット棚 */
+    .palette-board {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+      gap: 14px;
+      background: #ffffff;
+      padding: 18px;
+      border-radius: 16px;
+      border: 2px dashed #eedff2;
+      max-height: 340px;
+      overflow-y: auto;
+    }
+
+    /* カスタムスクロールバー */
+    .palette-board::-webkit-scrollbar {
+      width: 6px;
+    }
+    .palette-board::-webkit-scrollbar-thumb {
+      background: #e1cde8;
+      border-radius: 10px;
+    }
+
+    .color-pot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+      user-select: none;
+    }
+
+    .color-pot:active {
+      transform: scale(0.88);
+    }
+
+    .pot-well {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 4px solid #f2e9f5;
+      box-shadow: inset 0 4px 8px rgba(0,0,0,0.18), 0 3px 6px rgba(0,0,0,0.06);
+      position: relative;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .color-pot:hover .pot-well {
+      border-color: var(--primary);
+      box-shadow: inset 0 4px 8px rgba(0,0,0,0.22), 0 0 10px rgba(232, 160, 191, 0.4);
+    }
+
+    .pot-label {
+      font-size: 0.72rem;
+      margin-top: 5px;
+      text-align: center;
+      color: var(--text-main);
+      max-width: 68px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 500;
+    }
+
+    /* 混ぜ合わせトレイ */
+    .mix-tray {
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 14px;
+      min-height: 80px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid #f0e6f5;
+      margin-top: 8px;
+    }
+
+    .tray-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #fdf4f8;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      border: 1px solid #f5dce9;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .tray-color-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,0.15);
+      flex-shrink: 0;
+    }
+
+    .btn-drop-minus {
+      border: none;
+      background: var(--primary);
+      color: white;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 4px;
+      font-size: 0.75rem;
+      transition: background 0.2s;
+    }
+
+    .btn-drop-minus:hover {
+      background: var(--primary-hover);
+    }
+
+    /* プレビュー表示 */
+    .preview-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      padding: 24px 20px;
+      border-radius: 16px;
+      text-align: center;
+    }
+
+    .nail-chip-container {
+      position: relative;
+      width: 86px;
+      height: 140px;
+      margin: 12px 0 18px;
+    }
+
+    .nail-chip {
+      width: 100%;
+      height: 100%;
+      border-radius: 43px 43px 18px 18px;
+      background-color: #ffffff;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.14), inset -4px -4px 10px rgba(0,0,0,0.1), inset 4px 4px 12px rgba(255,255,255,0.85);
+      transition: background-color 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ネイルツヤ感ハイライト */
+    .nail-chip::after {
+      content: '';
+      position: absolute;
+      top: 12px;
+      left: 14px;
+      width: 14px;
+      height: 85px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.75), rgba(255,255,255,0));
+      border-radius: 10px;
+      transform: rotate(-10deg);
+    }
+
+    .ratio-badge {
+      background: var(--accent);
+      color: white;
+      padding: 5px 16px;
+      border-radius: 20px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+
+    .recipe-output {
+      width: 100%;
+      background: #f8f5fa;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      color: var(--text-main);
+      margin-top: 14px;
+      word-break: break-all;
+      line-height: 1.4;
+      border: 1px solid #efe6f3;
+    }
+
+    /* ボタン共通 */
+    .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(232, 160, 191, 0.35);
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #eedff2;
+      color: var(--text-main);
+    }
+    .btn-secondary:hover {
+      background: #e1cde8;
+    }
+
+    .btn-outline {
+      border: 1px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+    }
+    .btn-outline:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* =========================================
+       2. 棚の管理 (ジェル・パーツ)
+       ========================================= */
+    .shelf-subtabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .subtab-btn {
+      padding: 9px 20px;
+      border: 1.5px solid var(--primary);
+      border-radius: 25px;
+      background: transparent;
+      color: var(--primary);
+      font-weight: bold;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .subtab-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* フォーム設定 */
+    .form-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 14px;
+      border: 1px solid #f0e6f5;
+    }
+
+    .form-input {
+      padding: 10px 14px;
+      border: 1px solid #e0d0e6;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      outline: none;
+      flex: 1;
+      min-width: 130px;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary);
+    }
+
+    .form-input[type="color"] {
+      width: 48px;
+      height: 40px;
+      padding: 2px;
+      cursor: pointer;
+      flex: none;
+      border-radius: 8px;
+    }
+
+    /* グリッド表示 */
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+    }
+
+    .item-card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+      border: 1px solid #f4eaf6;
+      position: relative;
+    }
+
+    .item-color-swatch {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 2px solid #f0f0f0;
+      flex-shrink: 0;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .item-info {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .item-brand {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+    }
+
+    .item-name {
+      font-size: 0.88rem;
+      font-weight: bold;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      background: #f0e6f5;
+      padding: 2px 8px;
+      border-radius: 10px;
+      color: var(--accent);
+      margin-top: 3px;
+      font-weight: 500;
+    }
+
+    .btn-delete {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: none;
+      border: none;
+      color: #dba0a0;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 4px;
+      border-radius: 50%;
+      transition: color 0.2s;
+    }
+
+    .btn-delete:hover {
+      color: #e54d4d;
+    }
+
+    /* =========================================
+       3. 通知トースト & カスタムダイアログ
+       ========================================= */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      background: rgba(74, 62, 67, 0.92);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 25px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      backdrop-filter: blur(8px);
+      animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    @keyframes toastIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* モーダル背景 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(4px);
+      z-index: 900;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 24px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: var(--text-main);
+    }
+
+    .modal-body {
+      font-size: 0.88rem;
+      color: var(--text-sub);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ヘッダー -->
+  <header>
+    <div class="logo">
+      <i class="fa-solid fa-palette"></i> NailPalette
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <div class="container">
+    <!-- メインタブ -->
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('simulator')">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> 混色シミュレーター
+      </button>
+      <button class="tab-btn" onclick="switchTab('shelf')">
+        <i class="fa-solid fa-boxes-stacked"></i> 手持ちの棚管理
+      </button>
+    </div>
+
+    <!-- TAB 1: 混色シミュレーター -->
+    <div id="tab-simulator" class="tab-content active">
+      <div class="simulator-grid">
+        
+        <!-- 左：絵の具パレット & 混色トレイ -->
+        <div>
+          <div class="card">
+            <div class="card-title">
+              <span class="card-title-text">
+                <i class="fa-solid fa-paint-brush" style="color: var(--primary);"></i> 絵の具パレット
+              </span>
+              <span id="palette-count" style="font-size: 0.75rem; color: var(--text-sub); font-weight: normal;"></span>
+            </div>
+            <p style="font-size: 0.78rem; color: var(--text-sub); margin-bottom: 12px;">
+              使いたいカラーをタップして1滴ずつトレイに追加できます。
+            </p>
+            <div id="palette-board" class="palette-board">
+              <!-- JS動的描写 -->
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">
+              <span class="card-title-text">
+                <i class="fa-solid fa-eye-dropper" style="color: var(--accent);"></i> 混色トレイ
+              </span>
+              <button class="btn btn-secondary" style="padding: 5px 12px; font-size: 0.78rem;" onclick="clearMix()">
+                <i class="fa-solid fa-rotate-left"></i> 全クリア
+              </button>
+            </div>
+            <div id="mix-tray" class="mix-tray">
+              <!-- JS動的描写 -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 右：調合結果プレビュー -->
+        <div>
+          <div class="card">
+            <div class="card-title">
+              <span class="card-title-text">
+                <i class="fa-solid fa-sparkles" style="color: #f39c12;"></i> 完成カラー & プレビュー
+              </span>
+            </div>
+            
+            <div class="preview-box">
+              <div class="nail-chip-container">
+                <div id="nail-chip" class="nail-chip"></div>
+              </div>
+
+              <div id="ratio-badge" class="ratio-badge">0 : 0</div>
+
+              <div id="recipe-output" class="recipe-output">
+                パレットから色を選んでください
+              </div>
+
+              <button class="btn btn-primary" style="margin-top: 16px; width: 100%;" onclick="copyRecipe()">
+                <i class="fa-solid fa-copy"></i> レシピをコピー
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 2: 手持ちの棚管理 -->
+    <div id="tab-shelf" class="tab-content">
+      
+      <!-- サブタブ -->
+      <div class="shelf-subtabs">
+        <button class="subtab-btn active" id="subtab-gel" onclick="switchShelfSubtab('gel')">
+          <i class="fa-solid fa-bottle-droplet"></i> ジェルネイル棚
+        </button>
+        <button class="subtab-btn" id="subtab-part" onclick="switchShelfSubtab('part')">
+          <i class="fa-solid fa-gem"></i> パーツ棚
+        </button>
+      </div>
+
+      <!-- ジェル棚セクション -->
+      <div id="shelf-gel-section">
+        <div class="card">
+          <div class="card-title">
+            <span class="card-title-text">
+              <i class="fa-solid fa-plus-circle" style="color: var(--primary);"></i> 新しいジェルを追加
+            </span>
+            <button class="btn btn-outline" style="padding: 5px 12px; font-size: 0.78rem;" onclick="askResetGels()">
+              <i class="fa-solid fa-arrows-rotate"></i> プリセット(16色)を復元
+            </button>
+          </div>
+          <form class="form-group" onsubmit="addGel(event)">
+            <input type="text" id="gel-brand" class="form-input" placeholder="ブランド名 (例: CANMAKE)" required>
+            <input type="text" id="gel-name" class="form-input" placeholder="カラー名/番号 (例: N01)" required>
+            <input type="color" id="gel-color" class="form-input" value="#e8a0bf" title="色を選択">
+            <select id="gel-texture" class="form-input">
+              <option value="ワンカラー">ワンカラー</option>
+              <option value="シアー">シアー（透け感）</option>
+              <option value="ラメ・パール">ラメ・パール</option>
+            </select>
+            <button type="submit" class="btn btn-primary">追加</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span class="card-title-text">
+              <i class="fa-solid fa-list" style="color: var(--accent);"></i> 所持ジェル一覧
+            </span>
+          </div>
+          <div id="gels-grid" class="items-grid">
+            <!-- JS動的描写 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- パーツ棚セクション -->
+      <div id="shelf-part-section" style="display: none;">
+        <div class="card">
+          <div class="card-title">
+            <span class="card-title-text">
+              <i class="fa-solid fa-plus-circle" style="color: var(--primary);"></i> 新しいパーツを追加
+            </span>
+          </div>
+          <form class="form-group" onsubmit="addPart(event)">
+            <input type="text" id="part-name" class="form-input" placeholder="パーツ名 (例: オーロラストーン 2mm)" required>
+            <select id="part-category" class="form-input">
+              <option value="ストーン">ストーン</option>
+              <option value="パール">パール</option>
+              <option value="ラメ・ホロ">ラメ・ホロ</option>
+              <option value="チャーム・パーツ">チャーム・パーツ</option>
+            </select>
+            <select id="part-stock" class="form-input">
+              <option value="あり">在庫あり</option>
+              <option value="残りわずか">残りわずか</option>
+            </select>
+            <button type="submit" class="btn btn-primary">追加</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span class="card-title-text">
+              <i class="fa-solid fa-list" style="color: var(--accent);"></i> 所持パーツ一覧
+            </span>
+          </div>
+          <div id="parts-grid" class="items-grid">
+            <!-- JS動的描写 -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- カスタムダイアログモーダル -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div class="modal-card">
+      <div id="modal-title" class="modal-title">確認</div>
+      <div id="modal-body" class="modal-body">処理を実行しますか？</div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal()">キャンセル</button>
+        <button id="modal-confirm-btn" class="btn btn-primary">実行する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- トースト通知コンテナ -->
+  <div id="toast-container"></div>
+
+  <script>
+    // =========================================
+    // 16色の初期登録ジェルバリエーション (defaultGels)
+    // =========================================
+    const defaultGels = [
+      // 1-5: 調合の基本カラー
+      { id: 'g_white', brand: 'BASIC', name: 'ピュアホワイト', color: '#FFFFFF', texture: 'ワンカラー' },
+      { id: 'g_black', brand: 'BASIC', name: 'ブラック', color: '#1A1A1A', texture: 'ワンカラー' },
+      { id: 'g_red', brand: 'BASIC', name: 'ピュアレッド', color: '#E60033', texture: 'ワンカラー' },
+      { id: 'g_blue', brand: 'BASIC', name: 'ピュアブルー', color: '#0066CC', texture: 'ワンカラー' },
+      { id: 'g_yellow', brand: 'BASIC', name: 'ピュアイエロー', color: '#FFD700', texture: 'ワンカラー' },
+
+      // 6-10: ニュアンス・くすみカラー
+      { id: 'g_dustyrose', brand: 'CANMAKE', name: 'ダスティローズ', color: '#C47B89', texture: 'ワンカラー' },
+      { id: 'g_milktea', brand: 'NAIL TOWN', name: 'ミルクティーベージュ', color: '#D8C4B6', texture: 'ワンカラー' },
+      { id: 'g_pistachio', brand: 'セリア', name: 'ピスタチオグリーン', color: '#A3B899', texture: 'ワンカラー' },
+      { id: 'g_lavendergray', brand: 'ダイソー', name: 'ラベンダーグレー', color: '#B5A8B9', texture: 'ワンカラー' },
+      { id: 'g_terracotta', brand: 'HOMEI', name: 'テラコッタ', color: '#C86D51', texture: 'ワンカラー' },
+
+      // 11-14: トレンドの透け感（シアー）カラー
+      { id: 'g_sheerpink', brand: 'CANMAKE', name: 'シアーピンク', color: '#FFD1DC', texture: 'シアー' },
+      { id: 'g_sheeramber', brand: 'セリア', name: 'シアーアンバー', color: '#D99B59', texture: 'シアー' },
+      { id: 'g_sheermint', brand: 'ダイソー', name: 'シアーミント', color: '#B5EAD7', texture: 'シアー' },
+      { id: 'g_bordeaux', brand: 'HOMEI', name: 'ボルドーワイン', color: '#800020', texture: 'シアー' },
+
+      // 15-16: 輝き・ラメ
+      { id: 'g_gold', brand: 'NAIL TOWN', name: 'シャンパンゴールド', color: '#D4AF37', texture: 'ラメ・パール' },
+      { id: 'g_silver', brand: 'BASIC', name: 'オーロラシルバー', color: '#E0E6ED', texture: 'ラメ・パール' }
+    ];
+
+    const defaultParts = [
+      { id: 'p1', name: 'オーロラストーン 2mm', category: 'ストーン', stock: 'あり' },
+      { id: 'p2', name: '淡水風パール 3mm', category: 'パール', stock: '残りわずか' },
+      { id: 'p3', name: 'ゴールドフレームチャーム', category: 'チャーム・パーツ', stock: 'あり' }
+    ];
+
+    // ローカルストレージ管理 (v2バージョンチェック)
+    let gels = [];
+    let parts = JSON.parse(localStorage.getItem('nail_parts')) || defaultParts;
+    let currentMix = []; // 混色トレイのデータ [{ gelId, drops }]
+
+    function loadInitialData() {
+      const storedVersion = localStorage.getItem('nail_gels_version');
+      const storedGels = localStorage.getItem('nail_gels_v2');
+
+      if (storedVersion === 'v2' && storedGels) {
+        gels = JSON.parse(storedGels);
+      } else {
+        // v1または初回読み込み時は16色デフォルトプリセットでリセット
+        gels = JSON.parse(JSON.stringify(defaultGels));
+        localStorage.setItem('nail_gels_v2', JSON.stringify(gels));
+        localStorage.setItem('nail_gels_version', 'v2');
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem('nail_gels_v2', JSON.stringify(gels));
+      localStorage.setItem('nail_gels_version', 'v2');
+      localStorage.setItem('nail_parts', JSON.stringify(parts));
+    }
+
+    // 初期起動
+    document.addEventListener('DOMContentLoaded', () => {
+      loadInitialData();
+      renderGelShelf();
+      renderPartShelf();
+      renderPalette();
+      updateMixResult();
+    });
+
+    // =========================================
+    // UI通知 & モーダル関数 (alert/confirm代用)
+    // =========================================
+    function showToast(message, icon = 'fa-check-circle') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `<i class="fa-solid ${icon}"></i> ${message}`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+
+    function openModal(title, bodyText, onConfirm) {
+      document.getElementById('modal-title').innerText = title;
+      document.getElementById('modal-body').innerText = bodyText;
+      const overlay = document.getElementById('modal-overlay');
+      const confirmBtn = document.getElementById('modal-confirm-btn');
+
+      confirmBtn.onclick = () => {
+        onConfirm();
+        closeModal();
+      };
+
+      overlay.classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('active');
+    }
+
+    // =========================================
+    // タブ切り替え機能
+    // =========================================
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      if (tabName === 'simulator') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        document.getElementById('tab-simulator').classList.add('active');
+        renderPalette();
+      } else {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('tab-shelf').classList.add('active');
+      }
+    }
+
+    function switchShelfSubtab(type) {
+      const gelBtn = document.getElementById('subtab-gel');
+      const partBtn = document.getElementById('subtab-part');
+      const gelSec = document.getElementById('shelf-gel-section');
+      const partSec = document.getElementById('shelf-part-section');
+
+      if (type === 'gel') {
+        gelBtn.classList.add('active');
+        partBtn.classList.remove('active');
+        gelSec.style.display = 'block';
+        partSec.style.display = 'none';
+      } else {
+        partBtn.classList.add('active');
+        gelBtn.classList.remove('active');
+        partSec.style.display = 'block';
+        gelSec.style.display = 'none';
+      }
+    }
+
+    // =========================================
+    // 1. 混色シミュレーター (絵の具パレット)
+    // =========================================
+
+    function renderPalette() {
+      const paletteBoard = document.getElementById('palette-board');
+      const countLabel = document.getElementById('palette-count');
+      paletteBoard.innerHTML = '';
+
+      if (gels.length === 0) {
+        paletteBoard.innerHTML = '<p style="grid-column: 1/-1; font-size: 0.82rem; color: #999; text-align: center; padding: 20px;">ジェル棚に色が登録されていません。「手持ちの棚管理」から色を追加してください。</p>';
+        countLabel.innerText = '';
+        return;
+      }
+
+      countLabel.innerText = `全${gels.length}色`;
+
+      gels.forEach(gel => {
+        const pot = document.createElement('div');
+        pot.className = 'color-pot';
+        pot.onclick = () => addDrop(gel.id);
+
+        pot.innerHTML = `
+          <div class="pot-well" style="background-color: ${gel.color}"></div>
+          <div class="pot-label">${gel.name}</div>
+        `;
+        paletteBoard.appendChild(pot);
+      });
+    }
+
+    function addDrop(gelId) {
+      const item = currentMix.find(m => m.gelId === gelId);
+      if (item) {
+        item.drops += 1;
+      } else {
+        currentMix.push({ gelId, drops: 1 });
+      }
+      updateMixResult();
+    }
+
+    function removeDrop(gelId) {
+      const index = currentMix.findIndex(m => m.gelId === gelId);
+      if (index !== -1) {
+        currentMix[index].drops -= 1;
+        if (currentMix[index].drops <= 0) {
+          currentMix.splice(index, 1);
+        }
+      }
+      updateMixResult();
+    }
+
+    function clearMix() {
+      if (currentMix.length === 0) return;
+      currentMix = [];
+      updateMixResult();
+      showToast('トレイをクリアしました', 'fa-rotate-left');
+    }
+
+    // CMYK 減色調合 & 画面表示更新
+    function updateMixResult() {
+      const tray = document.getElementById('mix-tray');
+      const nailChip = document.getElementById('nail-chip');
+      const ratioBadge = document.getElementById('ratio-badge');
+      const recipeOutput = document.getElementById('recipe-output');
+
+      tray.innerHTML = '';
+
+      if (currentMix.length === 0) {
+        tray.innerHTML = '<span style="font-size: 0.8rem; color: var(--text-sub);">パレットのカラーをタップするとここに1滴ずつ入ります</span>';
+        nailChip.style.backgroundColor = '#ffffff';
+        ratioBadge.innerText = '0 : 0';
+        recipeOutput.innerText = 'パレットから色を選んでください';
+        return;
+      }
+
+      let ratioTextParts = [];
+      let recipeTextParts = [];
+
+      currentMix.forEach(m => {
+        const gel = gels.find(g => g.id === m.gelId);
+        if (!gel) return;
+
+        ratioTextParts.push(m.drops);
+        recipeTextParts.push(`${gel.brand} ${gel.name} (${m.drops}滴)`);
+
+        const badge = document.createElement('div');
+        badge.className = 'tray-item';
+        badge.innerHTML = `
+          <div class="tray-color-dot" style="background-color: ${gel.color}"></div>
+          <span>${gel.name} : <strong>${m.drops}滴</strong></span>
+          <button class="btn-drop-minus" onclick="event.stopPropagation(); removeDrop('${gel.id}')">-</button>
+        `;
+        tray.appendChild(badge);
+      });
+
+      // 減色混合カラー（CMYKモデル）を計算
+      const mixedHex = calculateSubtractiveMix(currentMix);
+      nailChip.style.backgroundColor = mixedHex;
+
+      ratioBadge.innerText = ratioTextParts.join(' : ');
+      recipeOutput.innerText = recipeTextParts.join(' + ') + ` [配合比 ${ratioTextParts.join(':')}]`;
+    }
+
+    // CMYKモデルに基づく調合ロジック
+    function calculateSubtractiveMix(mixList) {
+      let totalDrops = 0;
+      let totalC = 0, totalM = 0, totalY = 0, totalK = 0;
+
+      mixList.forEach(m => {
+        const gel = gels.find(g => g.id === m.gelId);
+        if (!gel) return;
+
+        totalDrops += m.drops;
+
+        // HEX -> RGB (0-1)
+        const hex = gel.color.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16) / 255;
+        const g = parseInt(hex.substring(2, 4), 16) / 255;
+        const b = parseInt(hex.substring(4, 6), 16) / 255;
+
+        // RGB -> CMYK
+        const k = 1 - Math.max(r, g, b);
+        const c = k === 1 ? 0 : (1 - r - k) / (1 - k);
+        const mVal = k === 1 ? 0 : (1 - g - k) / (1 - k);
+        const y = k === 1 ? 0 : (1 - b - k) / (1 - k);
+
+        totalC += c * m.drops;
+        totalM += mVal * m.drops;
+        totalY += y * m.drops;
+        totalK += k * m.drops;
+      });
+
+      if (totalDrops === 0) return '#ffffff';
+
+      const avgC = totalC / totalDrops;
+      const avgM = totalM / totalDrops;
+      const avgY = totalY / totalDrops;
+      const avgK = totalK / totalDrops;
+
+      // CMYK -> RGB
+      const r = Math.round(255 * (1 - avgC) * (1 - avgK));
+      const g = Math.round(255 * (1 - avgM) * (1 - avgK));
+      const b = Math.round(255 * (1 - avgY) * (1 - avgK));
+
+      return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    function copyRecipe() {
+      if (currentMix.length === 0) return;
+      const text = document.getElementById('recipe-output').innerText;
+
+      // 互換性重視のコピー処理
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast('レシピをコピーしました！', 'fa-copy');
+        });
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showToast('レシピをコピーしました！', 'fa-copy');
+      }
+    }
+
+    // =========================================
+    // 2. 手持ちの棚管理 (ジェル・パーツ)
+    // =========================================
+
+    // 16色プリセット復元機能
+    function askResetGels() {
+      openModal(
+        'プリセット(16色)の復元',
+        '現在登録されているジェルが初期の16色プリセットにリセットされます。よろしいですか？',
+        () => {
+          gels = JSON.parse(JSON.stringify(defaultGels));
+          currentMix = [];
+          saveData();
+          renderGelShelf();
+          renderPalette();
+          updateMixResult();
+          showToast('16色のプリセットを復元しました', 'fa-arrows-rotate');
+        }
+      );
+    }
+
+    function addGel(e) {
+      e.preventDefault();
+      const brand = document.getElementById('gel-brand').value.trim();
+      const name = document.getElementById('gel-name').value.trim();
+      const color = document.getElementById('gel-color').value;
+      const texture = document.getElementById('gel-texture').value;
+
+      if (!brand || !name) return;
+
+      const newGel = {
+        id: 'g_' + Date.now(),
+        brand,
+        name,
+        color,
+        texture
+      };
+
+      gels.push(newGel);
+      saveData();
+      renderGelShelf();
+      renderPalette();
+
+      document.getElementById('gel-brand').value = '';
+      document.getElementById('gel-name').value = '';
+      showToast(`${name} を棚に追加しました`, 'fa-plus');
+    }
+
+    function deleteGel(id, name) {
+      openModal(
+        'ジェルの削除',
+        `「${name}」を棚から削除しますか？`,
+        () => {
+          gels = gels.filter(g => g.id !== id);
+          currentMix = currentMix.filter(m => m.gelId !== id);
+          saveData();
+          renderGelShelf();
+          renderPalette();
+          updateMixResult();
+          showToast('ジェルを削除しました', 'fa-trash');
+        }
+      );
+    }
+
+    function renderGelShelf() {
+      const grid = document.getElementById('gels-grid');
+      grid.innerHTML = '';
+
+      if (gels.length === 0) {
+        grid.innerHTML = '<p style="grid-column: 1/-1; font-size: 0.85rem; color: #999; text-align: center; padding: 20px;">ジェルが登録されていません</p>';
+        return;
+      }
+
+      gels.forEach(gel => {
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        card.innerHTML = `
+          <div class="item-color-swatch" style="background-color: ${gel.color}"></div>
+          <div class="item-info">
+            <div class="item-brand">${gel.brand}</div>
+            <div class="item-name">${gel.name}</div>
+            <span class="item-badge">${gel.texture}</span>
+          </div>
+          <button class="btn-delete" onclick="deleteGel('${gel.id}', '${gel.name}')" title="削除">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function addPart(e) {
+      e.preventDefault();
+      const name = document.getElementById('part-name').value.trim();
+      const category = document.getElementById('part-category').value;
+      const stock = document.getElementById('part-stock').value;
+
+      if (!name) return;
+
+      const newPart = {
+        id: 'p_' + Date.now(),
+        name,
+        category,
+        stock
+      };
+
+      parts.push(newPart);
+      saveData();
+      renderPartShelf();
+
+      document.getElementById('part-name').value = '';
+      showToast(`${name} をパーツ棚に追加しました`, 'fa-plus');
+    }
+
+    function deletePart(id, name) {
+      openModal(
+        'パーツの削除',
+        `「${name}」を削除しますか？`,
+        () => {
+          parts = parts.filter(p => p.id !== id);
+          saveData();
+          renderPartShelf();
+          showToast('パーツを削除しました', 'fa-trash');
+        }
+      );
+    }
+
+    function renderPartShelf() {
+      const grid = document.getElementById('parts-grid');
+      grid.innerHTML = '';
+
+      if (parts.length === 0) {
+        grid.innerHTML = '<p style="grid-column: 1/-1; font-size: 0.85rem; color: #999; text-align: center; padding: 20px;">パーツが登録されていません</p>';
+        return;
+      }
+
+      parts.forEach(part => {
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        card.innerHTML = `
+          <div class="item-color-swatch" style="background: #f3ebf9; display: flex; align-items: center; justify-content: center; color: var(--accent);">
+            <i class="fa-solid fa-gem"></i>
+          </div>
+          <div class="item-info">
+            <div class="item-brand">${part.category}</div>
+            <div class="item-name">${part.name}</div>
+            <span class="item-badge">${part.stock}</span>
+          </div>
+          <button class="btn-delete" onclick="deletePart('${part.id}', '${part.name}')" title="削除">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        `;
+        grid.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>
